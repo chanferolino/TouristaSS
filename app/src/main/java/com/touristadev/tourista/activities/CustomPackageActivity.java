@@ -503,7 +503,7 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
                 SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                 String formattedDate = df.format(c.getTime());
 
-                Controllers.addBookPackages(new BookedPackages(pack.getPackageId(),pack.getPackageName(),pack.getPackageItinerary(),pack.getPackageTourGuideClassification(),pack.getRating(),pack.getPackageNoOfSpots(),pack.getPackageTotalNoOfHours(),pack.getPackageImage(),pack.getSpotItinerary(),pack.getPackDescription(),pack.getPackPrice(),formattedDate));
+                Controllers.addBookPackages(new BookedPackages(pack.getPackageId(),pack.getPackageName(),pack.getPackageItinerary(),pack.getPackageTourGuideClassification(),pack.getRating(),pack.getPackageNoOfSpots(),pack.getPackageTotalNoOfHours(),pack.getPackageImage(),pack.getSpotItinerary(),pack.getPackDescription(),pack.getPackPrice(),formattedDate,pack.getCompanyName()));
 
 
             }

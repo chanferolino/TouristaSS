@@ -35,7 +35,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter {
     private List<CardView> mViews;
     private List<ExploreCard> mData;
     private float mBaseElevation;
-    private TextView txtTitle,txtPrice,txtSpots,txtHours;
+    private TextView txtTitle,txtPrice,txtSpots,txtHours,txtCompName;
     private ImageView imgVi;
     private RatingBar rtBar;
     private int pos;
@@ -101,6 +101,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter {
         Typeface FontPoppinsBold = Typeface.createFromAsset(container.getContext().getAssets(), "fonts/Poppins-Bold.ttf");
         Typeface FontPoppinsLight = Typeface.createFromAsset(container.getContext().getAssets(), "fonts/Poppins-Light.ttf");
 
+        txtCompName = (TextView) view.findViewById(R.id.txtCompName);
         txtPrice = (TextView) view.findViewById(R.id.txtPrice);
         txtPrice.setTypeface(FontPoppinsBold);
 
@@ -123,6 +124,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter {
         txtHours = (TextView) view.findViewById(R.id.NoHours);
         rtBar = (RatingBar) view.findViewById(R.id.rtTGBar);
         imgVi = (ImageView) view.findViewById(R.id.imgCard);
+        txtCompName = (TextView) view.findViewById(R.id.txtCompName);
         pos = position;
 
         imgVi.setImageResource(mData.get(position).getImgView());
@@ -130,6 +132,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter {
         txtPrice.setText(mData.get(position).getPrice());
         txtSpots.setText(mData.get(position).getNoSpots());
         txtHours.setText(mData.get(position).getNoHours());
+        txtCompName.setText(mData.get(position).getCompanyName());
         rtBar.setRating((Float.parseFloat(String.valueOf(mData.get(position).getRating()))));
         rtBar.setFocusable(false);
 

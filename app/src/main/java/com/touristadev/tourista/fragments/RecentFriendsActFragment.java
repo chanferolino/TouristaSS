@@ -89,7 +89,7 @@ public class RecentFriendsActFragment extends Fragment {
         DealList.clear();
         if (TourListTemp != null) {
             for (int x = 0; x < TourListTemp.size(); x++) {
-                DealList.add(new ExploreCard(TourListTemp.get(x).getPackageName(), TourListTemp.get(x).getRating(), "₱ " + String.valueOf(TourListTemp.get(x).getPackPrice()), String.valueOf(TourListTemp.get(x).getPackageNoOfSpots()) + " Spots", String.valueOf(TourListTemp.get(x).getPackageTotalNoOfHours()) + " Hours", "tour",TourListTemp.get(x).getPackageImage()));
+                DealList.add(new ExploreCard(TourListTemp.get(x).getPackageName(), TourListTemp.get(x).getRating(), "₱ " + String.valueOf(TourListTemp.get(x).getPackPrice()), String.valueOf(TourListTemp.get(x).getPackageNoOfSpots()) + " Spots", String.valueOf(TourListTemp.get(x).getPackageTotalNoOfHours()) + " Hours", "tour",TourListTemp.get(x).getPackageImage(),TourListTemp.get(x).getCompanyName()));
 
             }
         }

@@ -94,7 +94,7 @@ public class HotSpotsFragment extends Fragment {
 //        -----------------------------------------------------------------------------------------------
         if(SpotListTemp!=null){
             for(int x = 0 ; x < SpotListTemp.size() ; x++) {
-                SpotList.add(new ExploreCard(SpotListTemp.get(x).getSpotName(), SpotListTemp.get(x).getSpotRating(), " ", " ", " ", "spot",SpotListTemp.get(x).getSpotImage()));
+                SpotList.add(new ExploreCard(SpotListTemp.get(x).getSpotName(), SpotListTemp.get(x).getSpotRating(), " ", " ", " ", "spot",SpotListTemp.get(x).getSpotImage(),""));
 
             }
         }

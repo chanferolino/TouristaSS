@@ -201,7 +201,7 @@ Log.d("LoginAct",mFinalCredential+"");
                 JSONObject obj = new JSONObject();
 
                Controllers.addWishPackage(pack);
-                Controllers.addBookPackages(new BookedPackages(pack.getPackageId(),pack.getPackageName(),pack.getPackageItinerary(),pack.getPackageTourGuideClassification(),pack.getRating(),pack.getPackageNoOfSpots(),pack.getPackageTotalNoOfHours(),pack.getPackageImage(),pack.getSpotItinerary(),pack.getPackDescription(),pack.getPackPrice(),formattedDate));
+                Controllers.addBookPackages(new BookedPackages(pack.getPackageId(),pack.getPackageName(),pack.getPackageItinerary(),pack.getPackageTourGuideClassification(),pack.getRating(),pack.getPackageNoOfSpots(),pack.getPackageTotalNoOfHours(),pack.getPackageImage(),pack.getSpotItinerary(),pack.getPackDescription(),pack.getPackPrice(),formattedDate,pack.getCompanyName()));
             Intent i = new Intent(BooknowActivity.this, PaypalActivity.class);
             i.putExtra("position", position);
             i.putExtra("type", typePackage);

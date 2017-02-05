@@ -81,6 +81,7 @@ public class CardExplorerPagerAdapter extends RecyclerView.Adapter<CardExplorerP
         public TextView txtPrice;
         public TextView txtSpots;
         public TextView txtHours;
+        public TextView txtCompanyName;
         public RatingBar rtBar;
         public ImageView imageV;
         public CardView cardView;
@@ -93,6 +94,7 @@ public class CardExplorerPagerAdapter extends RecyclerView.Adapter<CardExplorerP
             txtPrice = (TextView) view.findViewById(R.id.txtPrice);
             txtSpots = (TextView) view.findViewById(R.id.txtNoSpots);
             txtHours = (TextView) view.findViewById(R.id.NoHours);
+            txtCompanyName = (TextView) view.findViewById(R.id.txtCompanyName);
             rtBar = (RatingBar) view.findViewById(R.id.rtTGBar);
             imageV = (ImageView) view.findViewById(R.id.imgCard);
             cardView.setOnClickListener(this);
@@ -161,6 +163,7 @@ public class CardExplorerPagerAdapter extends RecyclerView.Adapter<CardExplorerP
        holder.txtPrice.setText(mDataAda.get(position).getPrice());
        holder.txtSpots.setText(mDataAda.get(position).getNoSpots());
         holder.txtHours.setText(mDataAda.get(position).getNoHours());
+        holder.txtCompanyName.setText(mDataAda.get(position).getCompanyName());
         holder.rtBar.setRating((Float.parseFloat(String.valueOf(mDataAda.get(position).getRating()))));
         holder.rtBar.setFocusable(false);
 

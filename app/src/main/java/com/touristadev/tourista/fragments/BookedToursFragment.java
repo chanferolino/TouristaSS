@@ -108,7 +108,7 @@ public class BookedToursFragment extends Fragment {
 //        mak.execute();
         if (BookedListTemp != null) {
             for (int x = 0; x < BookedListTemp.size(); x++) {
-                BookedList.add(new ExploreCard(BookedListTemp.get(x).getPackageName(), BookedListTemp.get(x).getRating(), "₱ " + String.valueOf(BookedListTemp.get(x).getPackageTotalNoOfHours()*40), String.valueOf(BookedListTemp.get(x).getPackageNoOfSpots()) + " Spots", "Start Date: "+String.valueOf(BookedListTemp.get(x).getPackageTotalNoOfHours()) , "tour",BookedListTemp.get(x).getPackageImage()));
+                BookedList.add(new ExploreCard(BookedListTemp.get(x).getPackageName(), BookedListTemp.get(x).getRating(), "₱ " + String.valueOf(BookedListTemp.get(x).getPackageTotalNoOfHours()*40), String.valueOf(BookedListTemp.get(x).getPackageNoOfSpots()) + " Spots", "Start Date: "+String.valueOf(BookedListTemp.get(x).getPackageTotalNoOfHours()) , "tour",BookedListTemp.get(x).getPackageImage(),BookedListTemp.get(x).getCompanyName()));
 
             }
         }

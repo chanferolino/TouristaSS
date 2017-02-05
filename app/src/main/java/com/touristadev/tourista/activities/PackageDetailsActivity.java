@@ -23,7 +23,7 @@ import java.util.ArrayList;
 public class PackageDetailsActivity extends AppCompatActivity {
     private int position;
     private ImageView imgPackage;
-    private TextView txtPackageName,txtNumberSpots,txtNumberHours,txtPackPrice,txtPackDesc;
+    private TextView txtPackageName,txtNumberSpots,txtNumberHours,txtPackPrice,txtPackDesc,txtCompanyName;
     private RatingBar ratBar;
     private ListView mListViewItinerary;
     private Button btnBook,btnPolicy;
@@ -51,6 +51,7 @@ public class PackageDetailsActivity extends AppCompatActivity {
         txtPackPrice = (TextView) findViewById(R.id.txtPackPrice);
         txtPackDesc = (TextView) findViewById(R.id.txtPackDesc);
         btnPolicy = (Button) findViewById(R.id.btnCancellationPollicy);
+        txtCompanyName = (TextView) findViewById(R.id.txtCompanyName);
         btnPolicy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -84,6 +85,7 @@ public class PackageDetailsActivity extends AppCompatActivity {
             txtNumberHours.setText(pack.getPackageTotalNoOfHours()+" Hours");
             txtPackPrice.setText("₱ "+pack.getPackPrice());
             txtPackDesc.setText(pack.getPackDescription());
+            txtCompanyName.setText(pack.getCompanyName());
             ratBar.setRating(pack.getRating());
 
             packItinerary.clear();
