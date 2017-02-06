@@ -98,22 +98,20 @@ public class CustomPackageAdapter extends RecyclerView.Adapter<CustomPackageAdap
                 .inflate(R.layout.card_item_customized, parent, false);
         context = view.getContext();
 
-        //FONTS
-//        Typeface FontPoppinsBold = Typeface.createFromAsset(context.getAssets(), "fonts/Poppins-Bold.ttf");
-//        Typeface FontPoppinsLight = Typeface.createFromAsset(context.getAssets(), "fonts/Poppins-Light.ttf");
-//
-//        txtPrice = (TextView) view.findViewById(R.id.txtPrice);
-//        txtPrice.setTypeface(FontPoppinsBold);
-//
-//        txtTitle = (TextView) view.findViewById(R.id.txtTGTitle);
-//        txtTitle.setTypeface(FontPoppinsLight);
-//
-//        txtSpots = (TextView) view.findViewById(R.id.txtNoSpots);
-//        txtSpots.setTypeface(FontPoppinsLight);
-//
-//        txtHours = (TextView) view.findViewById(R.id.NoHours);
-//        txtHours.setTypeface(FontPoppinsLight);
+        Typeface FontPoppinsBold = Typeface.createFromAsset(context.getAssets(), "fonts/Poppins-Bold.ttf");
+        Typeface FontPoppinsLight = Typeface.createFromAsset(context.getAssets(), "fonts/Poppins-Light.ttf");
 
+        txtPrice = (TextView) view.findViewById(R.id.txtPrice);
+        txtPrice.setTypeface(FontPoppinsBold);
+
+        txtTitle = (TextView) view.findViewById(R.id.txtTGTitle);
+        txtTitle.setTypeface(FontPoppinsLight);
+
+        txtSpots = (TextView) view.findViewById(R.id.txtNoSpots);
+        txtSpots.setTypeface(FontPoppinsLight);
+
+        txtHours = (TextView) view.findViewById(R.id.tourDate);
+        txtHours.setTypeface(FontPoppinsLight);
         view.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -136,6 +134,9 @@ public class CustomPackageAdapter extends RecyclerView.Adapter<CustomPackageAdap
         holder.imageV.setImageResource(mDataAda.get(position).getPackageImage());
         holder.txtTitle.setText(mDataAda.get(position).getPackageName());
         holder.txtPrice.setText("₱ "+mDataAda.get(position).getPrice());
+
+        Typeface FontPoppinsLight = Typeface.createFromAsset(context.getAssets(), "fonts/Poppins-Light.ttf");
+        holder.txtDate.setTypeface(FontPoppinsLight);
         if(mDataAda.get(position).getPackageItinerary()==null){
             holder.txtSpots.setText("No itinerary yet");
         }

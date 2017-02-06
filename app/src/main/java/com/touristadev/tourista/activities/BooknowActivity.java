@@ -204,6 +204,7 @@ Log.d("LoginAct",mFinalCredential+"");
                 Controllers.addBookPackages(new BookedPackages(pack.getPackageId(),pack.getPackageName(),pack.getPackageItinerary(),pack.getPackageTourGuideClassification(),pack.getRating(),pack.getPackageNoOfSpots(),pack.getPackageTotalNoOfHours(),pack.getPackageImage(),pack.getSpotItinerary(),pack.getPackDescription(),pack.getPackPrice(),formattedDate,pack.getCompanyName()));
             Intent i = new Intent(BooknowActivity.this, PaypalActivity.class);
             i.putExtra("position", position);
+            i.putExtra("pax", spinValue);
             i.putExtra("type", typePackage);
             i.putExtra("title", packageTitle);
             startActivity(i);

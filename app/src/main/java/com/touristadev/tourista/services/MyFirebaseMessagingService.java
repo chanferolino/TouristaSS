@@ -31,6 +31,7 @@ import com.google.firebase.messaging.RemoteMessage;
 import com.touristadev.tourista.R;
 import com.touristadev.tourista.activities.PassportActivity;
 import com.touristadev.tourista.activities.TourActivity;
+import com.touristadev.tourista.dataModels.FBNotif;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -54,9 +55,15 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         // Check if message contains a notification payload.
         if (remoteMessage.getNotification() != null) {
-            String packagename = remoteMessage.getData().get("message");
-
-            sendNotification(remoteMessage.getNotification().getTitle(), remoteMessage.getNotification().getBody(), packagename);
+            String tourName = remoteMessage.getData().get("nameOfTourist");
+            String numPerson = remoteMessage.getData().get("numberOfPerson");
+            String packId = remoteMessage.getData().get("packageId");
+            String reserveD = remoteMessage.getData().get("reserveDate");
+            String paymentTG = remoteMessage.getData().get("paymentforTG");
+            String notifType = remoteMessage.getData().get("notifType");
+            FBNotif fbn = new FBNotif(tourName,numPerson,packId,reserveD,paymentTG,notifType);
+            if(notifType.equals("Request"))
+            sendNotification(remoteMessage.getNotification().getTitle(), remoteMessage.getNotification().getBody(), fbn);
 //            }
         }
 
@@ -67,10 +74,18 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
      *
      * @param messageBody FCM message body received.
      */
-    public void sendNotification(String title, String messageBody, String packagename) {
+    public void sendNotification(String title, String messageBody, FBNotif fbnot) {
 
         Intent intent2 = new Intent(getApplicationContext(), PassportActivity.class);
-        intent2.putExtra("PackageName", packagename);
+        intent2.putExtra("nameOfTourist", fbnot.getNameOfTourist());
+        intent2.putExtra("numberOfPerson", fbnot.getNumberOfPerson());
+        intent2.putExtra("packageId", fbnot.getPackageId());
+        intent2.putExtra("reserveDate", fbnot.getReserveDate());
+        intent2.putExtra("paymentforTG", fbnot.getPaymentforTG());
+        intent2.putExtra("notifType", fbnot.getNotifType());
+
+
+
         // your application to the Home screen.
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         // Adds the back stack for the Intent (but not the Intent itself)

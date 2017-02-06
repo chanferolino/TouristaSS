@@ -71,7 +71,6 @@ public class PackageDetailsActivity extends AppCompatActivity {
         btnBook.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Controllers.addWishPackage(pack);
                 Intent i = new Intent(PackageDetailsActivity.this, BooknowActivity.class);
                 i.putExtra("position", position);
                 i.putExtra("type", typePackage);

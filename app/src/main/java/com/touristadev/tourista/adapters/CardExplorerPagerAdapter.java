@@ -156,13 +156,15 @@ public class CardExplorerPagerAdapter extends RecyclerView.Adapter<CardExplorerP
     @Override
     public void onBindViewHolder(CardExplorerPagerAdapter.MyViewHolder holder, int position) {
         holder.cardView.setTag(position);
+        Typeface FontPoppinsLight = Typeface.createFromAsset(context.getAssets(), "fonts/Poppins-Light.ttf");
 
-        Glide.with(context).load("http://192.168.254.103:8000/api/get-image").into( holder.imageV);
+
         holder.imageV.setImageResource(mDataAda.get(position).getImgView());
         holder.txtTitle.setText(mDataAda.get(position).getTitle());
        holder.txtPrice.setText(mDataAda.get(position).getPrice());
        holder.txtSpots.setText(mDataAda.get(position).getNoSpots());
         holder.txtHours.setText(mDataAda.get(position).getNoHours());
+        holder.txtCompanyName.setTypeface(FontPoppinsLight);
         holder.txtCompanyName.setText(mDataAda.get(position).getCompanyName());
         holder.rtBar.setRating((Float.parseFloat(String.valueOf(mDataAda.get(position).getRating()))));
         holder.rtBar.setFocusable(false);

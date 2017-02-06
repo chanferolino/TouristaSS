@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -48,6 +49,7 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.plus.Plus;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
@@ -89,13 +91,14 @@ import java.util.Objects;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
-public class CustomPackageActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks,  LocationListener {
+public class CustomPackageActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks,  LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     static final int REQUEST_AUTHORIZATION = 1001;
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
     static final int REQUEST_PERMISSION_GET_ACCOUNTS = 1003;
     static final int RESULT_LOAD_IMAGE = 1;
 
+    Location mLastLocation;
     GoogleAccountCredential mFinalCredential;
     private TouristaPackages pack = new TouristaPackages();
     private static final String PREF_ACCOUNT_NAME = "accountName";
@@ -150,16 +153,13 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
         txtPrice.setEnabled(true);
         txtPrice.setClickable(true);
         mProgress = new ProgressDialog(this);
-        mProgress.setMessage(" Adding event to google calendar");
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(1000);
-        mLocationRequest.setFastestInterval(1000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest,  this);
-        }
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .setAccountName(CurrentUser.email)
+                .build();
+
         spinLang = (MaterialSpinner) findViewById(R.id.spinCustomLang);
         spinNumTG = (MaterialSpinner) findViewById(R.id.spnCustomTourGuides);
         spinPax = (MaterialSpinner) findViewById(R.id.spinPax);
@@ -323,8 +323,7 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
         btnBook.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                view.setBackgroundColor(Color.GREEN);
+                getWindow().getDecorView().setBackgroundColor(Color.GREEN);
                 addEvent();
 
             }
@@ -370,14 +369,38 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
         inflater.inflate(R.menu.option_menu, menu); //your file name
         return super.onCreateOptionsMenu(menu);
     }
+    public double getLat(){
+        double retVal = 0d;
+        if (mLastLocation != null){
+            retVal = mLastLocation.getLatitude();
+        }
+        return retVal;
+    }
+    public double getLon(){
+        double retVal = 0d;
+        if (mLastLocation != null){
+            retVal = mLastLocation.getLongitude();
+        }
+        return retVal;
+    }
+
     public boolean onOptionsItemSelected(final MenuItem item) {
         ArrayList<CustomizedPackage> custList = new ArrayList<>();
         custList = Controllers.getCustomizedPackageList();
         switch (item.getItemId()) {
             case R.id.save:
-                if(!Objects.equals(type, "create")){
+                if(type.equals("create")) {
+                    ArrayList<Itinerary> tempo = new ArrayList<>();
+                    CustomizedPackage cust = new CustomizedPackage(txtPackName.getText().toString(), spinLanguage, spinTGnum, spinPaxnum, "0", tempo, Integer.parseInt(txtDays.getText().toString()), R.mipmap.ic_tourista, edtDescription.getText().toString(), eventDate);
+                    Controllers.addCustomizedPackage(cust);
+                    addEvent();
+
+                }
+                else {
+
+                    Log.d("CustomPackageChan", "Sud!Create1 :");
                     Controllers.removeCustomizedPackage(Integer.parseInt(pos));
-                   ArrayList<Itinerary> temp = new ArrayList<>();
+                    ArrayList<Itinerary> temp = new ArrayList<>();
                     temp = Controllers.getCustomizedPackageList().get(Integer.parseInt(pos)).getPackageItinerary();
 
                     int hours = Integer.parseInt(txtDays.getText().toString()) * 8;
@@ -420,12 +443,14 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
 
 
                         }
+
+                        Log.d("CustomPackageChan", "Sud!Create 2:");
                         if (startp != null && endp != null) {
                             distance = Controllers.CalculationByDistance(startp, endp);
 
-                            Log.d("CustomPackage", "Distance :" + distance);
+                            Log.d("CustomPackageChan", "Distance :" + distance);
                         } else {
-                            Log.d("CustomPackage", "Distance is null");
+                            Log.d("CustomPackageChan", "Distance is null");
                         }
 
 
@@ -433,8 +458,8 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
                     distanceprice = distance * 50;
                     finalPrice = (hours * distanceprice) * Double.parseDouble(spinPaxnum);
 
-                    Log.d("CustomPackage", "Distance price :" + distanceprice);
-                    Log.d("CustomPackage", "Final price :" + finalPrice);
+                    Log.d("CustomPackageChan", "Distance price :" + distanceprice);
+                    Log.d("CustomPackageChan", "Final price :" + finalPrice);
                     CustomizedPackage cust = new CustomizedPackage(txtPackName.getText().toString(), spinLanguage, spinTGnum, spinPaxnum, String.valueOf(finalPrice), temp, Integer.parseInt(txtDays.getText().toString()), R.mipmap.ic_tourista, edtDescription.getText().toString(), eventDate);
                     Controllers.addCustomizedPackage(cust);
 
@@ -442,13 +467,6 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
                     Intent i = new Intent(CustomPackageActivity.this, TourActivity.class);
                     startActivity(i);
 
-                }
-                else {
-
-                    ArrayList<Itinerary> tempo = new ArrayList<>();
-                    CustomizedPackage cust = new CustomizedPackage(txtPackName.getText().toString(), spinLanguage, spinTGnum, spinPaxnum, "0", tempo, Integer.parseInt(txtDays.getText().toString()), R.mipmap.ic_tourista, edtDescription.getText().toString(), eventDate);
-                    Controllers.addCustomizedPackage(cust);
-                    addEvent();
                 }
                 return true;
             case R.id.edit:
@@ -505,6 +523,8 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
 
                 Controllers.addBookPackages(new BookedPackages(pack.getPackageId(),pack.getPackageName(),pack.getPackageItinerary(),pack.getPackageTourGuideClassification(),pack.getRating(),pack.getPackageNoOfSpots(),pack.getPackageTotalNoOfHours(),pack.getPackageImage(),pack.getSpotItinerary(),pack.getPackDescription(),pack.getPackPrice(),formattedDate,pack.getCompanyName()));
 
+                Intent i = new Intent(CustomPackageActivity.this, TourActivity.class);
+                startActivity(i);
 
             }
 
@@ -657,7 +677,36 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
     @Override
     public void onLocationChanged(Location location) {
         Controllers.setCurrentLocation(new LatLng(location.getLatitude(),location.getLongitude()));
+
+        mLastLocation = location;
         curlocation = new LatLng(location.getLatitude(),location.getLongitude());
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                mGoogleApiClient);
+        mProgress.setMessage(" Adding event to google calendar");
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(1000);
+        mLocationRequest.setFastestInterval(1000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest,  this);
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
     }
 
     private class MakeRequestTask extends AsyncTask<Void, Void, List<String>> {

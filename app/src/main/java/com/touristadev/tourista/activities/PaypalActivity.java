@@ -16,6 +16,7 @@ import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.touristadev.tourista.R;
 import com.touristadev.tourista.controllers.Controllers;
 import com.touristadev.tourista.dataModels.TouristaPackages;
+import com.touristadev.tourista.models.CurrentUser;
 import com.touristadev.tourista.utils.HttpUtils;
 
 import org.json.JSONException;
@@ -29,7 +30,7 @@ import java.util.Locale;
 public class PaypalActivity extends AppCompatActivity {
 
     private Button btnPaypal;
-
+    private String paxData;
     private Calendar myCalendar;
     private EditText edtDate;
     private ArrayList<TouristaPackages> mList = new ArrayList<>();
@@ -49,6 +50,7 @@ public class PaypalActivity extends AppCompatActivity {
         position = i.getIntExtra("position", 0);
         typePackage = i.getStringExtra("type");
         packageTitle = i.getStringExtra("title");
+        paxData = i.getStringExtra("pax");
         final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
 
             @Override
@@ -88,10 +90,16 @@ public class PaypalActivity extends AppCompatActivity {
 //                            Controllers.addWishPackages(mList.get(x));
 //                            Controllers.addBookedPackages(mList.get(x));
                             JSONObject jsonObject = new JSONObject();
+
                             try {
                                 jsonObject.put("to", "/topics/news");
                                 JSONObject data = new JSONObject();
-                                data.put("message", mList.get(x).getPackageName());
+                                data.put("nameOfTourist", CurrentUser.name);
+                                data.put("numberOfPerson", paxData);
+                                data.put("packageId", mList.get(x).getPackageId());
+                                data.put("reserveDate", edtDate.getText().toString());
+                                data.put("paymentforTG", mList.get(x).getPackDescription());
+                                data.put("notifType", "Request");
                                 jsonObject.put("data", data);
                                 JSONObject notification = new JSONObject();
                                 notification.put("title", "Incoming Request..");

@@ -112,7 +112,9 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter {
         txtSpots.setTypeface(FontPoppinsLight);
 
         txtHours = (TextView) view.findViewById(R.id.NoHours);
-        txtHours.setTypeface(FontPoppinsLight);
+        txtHours.setTypeface(FontPoppinsLight);;
+        txtCompName = (TextView) view.findViewById(R.id.txtCompName);
+        txtCompName.setTypeface(FontPoppinsLight);
 
 
 
