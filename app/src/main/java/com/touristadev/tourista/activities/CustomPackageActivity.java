@@ -24,6 +24,7 @@ import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -49,7 +50,6 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.plus.Plus;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
@@ -65,6 +65,7 @@ import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.EventReminder;
 import com.jaredrummler.materialspinner.MaterialSpinner;
+import com.touristadev.tourista.GPSTracker;
 import com.touristadev.tourista.R;
 import com.touristadev.tourista.controllers.Controllers;
 import com.touristadev.tourista.dataModels.BookedPackages;
@@ -73,9 +74,7 @@ import com.touristadev.tourista.dataModels.Itinerary;
 import com.touristadev.tourista.dataModels.Spots;
 import com.touristadev.tourista.dataModels.TouristaPackages;
 import com.touristadev.tourista.models.CurrentUser;
-import com.touristadev.tourista.utils.HttpUtils;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.FileDescriptor;
@@ -86,12 +85,11 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
-public class CustomPackageActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks,  LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class CustomPackageActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks, LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     static final int REQUEST_AUTHORIZATION = 1001;
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
@@ -102,13 +100,14 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
     GoogleAccountCredential mFinalCredential;
     private TouristaPackages pack = new TouristaPackages();
     private static final String PREF_ACCOUNT_NAME = "accountName";
-    private static final String[] SCOPES = { CalendarScopes.CALENDAR };
-    private EditText edtDate,edtDescription;
-    private TextView txtPackName,txtDays,txtPrice;
-    private MaterialSpinner spinLang,spinNumTG,spinPax;
+    private static final String[] SCOPES = {CalendarScopes.CALENDAR};
+    private EditText edtDate, edtDescription;
+    private TextView txtPackName, txtDays, txtPrice;
+    private MaterialSpinner spinLang, spinNumTG, spinPax;
     private ListView itineraryList;
     private Button btnBook;
-    private String spinTGnum,spinLanguage,spinPaxnum;
+    private String spinTGnum, spinLanguage;
+    private static String spinPaxnum;
     private Calendar myCalendar;
     private String type;
     private String eventDate;
@@ -128,6 +127,7 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
 
 
     private static final long MIN_TIME_BW_UPDATES = 1000 * 60 * 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -137,7 +137,7 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
         mFinalCredential = GoogleAccountCredential.usingOAuth2(
                 getApplicationContext(), Arrays.asList("https://www.googleapis.com/auth/calendar"))
                 .setBackOff(new ExponentialBackOff());
-        Log.d("LoginAct",mFinalCredential+"");
+        Log.d("LoginAct", mFinalCredential + "");
         edtDate = (EditText) findViewById(R.id.edtCustomDate);
         edtDescription = (EditText) findViewById(R.id.customDesc);
         txtPackName = (TextView) findViewById(R.id.txtCustomPackName);
@@ -153,12 +153,16 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
         txtPrice.setEnabled(true);
         txtPrice.setClickable(true);
         mProgress = new ProgressDialog(this);
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .setAccountName(CurrentUser.email)
-                .build();
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.connect();
+        }
 
         spinLang = (MaterialSpinner) findViewById(R.id.spinCustomLang);
         spinNumTG = (MaterialSpinner) findViewById(R.id.spnCustomTourGuides);
@@ -167,7 +171,8 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
 
         spinNumTG.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
 
-            @Override public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
+            @Override
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 spinTGnum = item;
             }
         });
@@ -175,15 +180,18 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
 
         spinPax.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
 
-            @Override public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
+            @Override
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 spinPaxnum = item;
+                Log.d("CustomPackActChan", spinPaxnum + "");
             }
         });
 
         spinLang.setItems("English", "Cebuano", "Tagalog", "Japanese", "Chinese", "Korean", "Bicolano", "Waray");
         spinLang.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
 
-            @Override public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
+            @Override
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
                 spinLanguage = item;
             }
         });
@@ -193,7 +201,7 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
         imgV.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent i = new Intent(Intent.ACTION_PICK,android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                Intent i = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                 startActivityForResult(i, RESULT_LOAD_IMAGE);
             }
         });
@@ -218,8 +226,8 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
         txtPrice.setClickable(false);
         txtPrice.setFocusableInTouchMode(false);
 
-        Log.d("CustomPackageChannix","Type: "+type);
-        if(type.equals("create")){
+        Log.d("CustomPackageChannix", "Type: " + type);
+        if (type.equals("create")) {
             pos = "0";
 
             btnBook.setVisibility(View.GONE);
@@ -243,13 +251,13 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
             txtPrice.setClickable(true);
             txtPrice.setFocusableInTouchMode(true);
         }
-        if(type.equals("details")){
+        if (type.equals("details")) {
             pos = i.getStringExtra("pos");
-            Log.d("CustomPackagechan",pos+"");
-            Log.d("CustomPackagechan",i.getStringExtra("pos"));
+            Log.d("CustomPackagechan", pos + "");
+            Log.d("CustomPackagechan", i.getStringExtra("pos"));
             customList = Controllers.getCustomizedPackageList();
             customData = customList.get(Integer.parseInt(pos));
-            Log.d("CustomPackagechan",Integer.parseInt(pos)+"");
+            Log.d("CustomPackagechan", Integer.parseInt(pos) + "");
 
 
             edtDate.setText(customData.getStartDate());
@@ -261,22 +269,22 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
             int spinlangIndex = 0;
             int spinNumTGindex = 0;
             int spinNumPaxindex = 0;
-            for(int x = 0 ; x<spinLang.getItems().size();x++){
-                if(spinLang.getItems().get(x).equals(customData.getPackLanguage())){
+            for (int x = 0; x < spinLang.getItems().size(); x++) {
+                if (spinLang.getItems().get(x).equals(customData.getPackLanguage())) {
                     spinlangIndex = x;
                 }
             }
             spinLang.setSelectedIndex(spinlangIndex);
             spinLang.setEnabled(false);
-            for(int x = 0 ; x<spinNumTG.getItems().size();x++){
-                if(spinNumTG.getItems().get(x).equals(customData.getPackNumTourGuide())){
+            for (int x = 0; x < spinNumTG.getItems().size(); x++) {
+                if (spinNumTG.getItems().get(x).equals(customData.getPackNumTourGuide())) {
                     spinNumTGindex = x;
                 }
             }
             spinNumTG.setSelectedIndex(spinNumTGindex);
             spinNumTG.setEnabled(false);
-            for(int x = 0 ; x<spinPax.getItems().size();x++){
-                if(spinPax.getItems().get(x).equals(customData.getPackNumTourGuide())){
+            for (int x = 0; x < spinPax.getItems().size(); x++) {
+                if (spinPax.getItems().get(x).equals(customData.getPackNumTourGuide())) {
                     spinNumPaxindex = x;
                 }
             }
@@ -285,7 +293,7 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
             String spot_name;
 
             for (int x = 0; x < customData.getPackageItinerary().size(); x++) {
-                packItinerary.add(customData.getPackageItinerary().get(x).getStartTime()+"\t\t\t\t "+customData.getPackageItinerary().get(x).getEndTime()+"\t\t\t\t "+customData.getPackageItinerary().get(x).getSpotID()+"\t\t\t\t");
+                packItinerary.add(customData.getPackageItinerary().get(x).getStartTime() + "\t\t\t\t " + customData.getPackageItinerary().get(x).getEndTime() + "\t\t\t\t " + customData.getPackageItinerary().get(x).getSpotID() + "\t\t\t\t");
 
             }
             ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -355,7 +363,6 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
         });
 
 
-
     }
 
     private void updateLabel() {
@@ -364,21 +371,24 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
         edtDate.setText(sdf.format(myCalendar.getTime()));
         eventDate = String.valueOf(edtDate.getText());
     }
+
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.option_menu, menu); //your file name
         return super.onCreateOptionsMenu(menu);
     }
-    public double getLat(){
+
+    public double getLat() {
         double retVal = 0d;
-        if (mLastLocation != null){
+        if (mLastLocation != null) {
             retVal = mLastLocation.getLatitude();
         }
         return retVal;
     }
-    public double getLon(){
+
+    public double getLon() {
         double retVal = 0d;
-        if (mLastLocation != null){
+        if (mLastLocation != null) {
             retVal = mLastLocation.getLongitude();
         }
         return retVal;
@@ -389,23 +399,23 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
         custList = Controllers.getCustomizedPackageList();
         switch (item.getItemId()) {
             case R.id.save:
-                if(type.equals("create")) {
+                if (type.equals("create")) {
                     ArrayList<Itinerary> tempo = new ArrayList<>();
-                    CustomizedPackage cust = new CustomizedPackage(txtPackName.getText().toString(), spinLanguage, spinTGnum, spinPaxnum, "0", tempo, Integer.parseInt(txtDays.getText().toString()), R.mipmap.ic_tourista, edtDescription.getText().toString(), eventDate);
+                    CustomizedPackage cust = new CustomizedPackage(txtPackName.getText().toString(), spinLanguage, spinTGnum, spinPaxnum, "0", tempo, Integer.parseInt(txtDays.getText().toString()), R.mipmap.ic_tourista, edtDescription.getText().toString(), edtDate.getText().toString());
                     Controllers.addCustomizedPackage(cust);
                     addEvent();
 
-                }
-                else {
+                } else {
 
                     Log.d("CustomPackageChan", "Sud!Create1 :");
-                    Controllers.removeCustomizedPackage(Integer.parseInt(pos));
                     ArrayList<Itinerary> temp = new ArrayList<>();
                     temp = Controllers.getCustomizedPackageList().get(Integer.parseInt(pos)).getPackageItinerary();
 
                     int hours = Integer.parseInt(txtDays.getText().toString()) * 8;
                     ArrayList<Spots> spotListemp = new ArrayList<>();
                     spotListemp = Controllers.getControllerSpots();
+
+                    Log.d("CustomPackageChan", spotListemp.size() + " ");
                     double distance = 0;
 
                     String spotIdStart, spotIdEnd;
@@ -413,28 +423,46 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
                     LatLng startp = null;
                     LatLng endp = null;
                     double distanceprice, finalPrice;
-                    for (int z = 1; z < temp.size(); z++) {
-                        int x = z + 1;
-                        spotIdStart = temp.get(z).getSpotID();
-                        spotIdEnd = temp.get(x).getSpotID();
+                    int x = 0;
+                    for (int z = 0; z < temp.size(); z++) {
 
+                        x += 1;
+
+                        spotIdStart = temp.get(z).getSpotID();
+                        if (temp.size() == 1) {
+                            spotIdEnd = temp.get(z).getSpotID();
+                        } else {
+                            if (x == temp.size()) {
+                                spotIdEnd = temp.get(z).getSpotID();
+
+                            } else {
+                                spotIdEnd = temp.get(x).getSpotID();
+                            }
+                        }
 
                         if (z == 0) {
                             startp = Controllers.getCurrentLocation();
-                            if(startp.equals(null)){
-                                startp = curlocation;
-                            }
-                            endp = new LatLng(Double.parseDouble(spotListemp.get(0).getSpotLocationLat()),Double.parseDouble(spotListemp.get(0).getSpotLocationLong()));
+                            Log.d("CustomPackageActChan", startp + " wew1");
+
+                            startp = Controllers.getCurrentLocation();
+                            Log.d("CustomPackageActChan", startp + " wew2");
+
+                            endp = new LatLng(Double.parseDouble(spotListemp.get(0).getSpotLocationLat()), Double.parseDouble(spotListemp.get(0).getSpotLocationLong()));
                         } else {
                             startp = null;
                             endp = null;
-                            for(int q = 0; q < spotListemp.size();q++) {
-                                if (spotListemp.get(q).getSpotID().equals(spotIdStart)) {
+                            for (int q = 0; q < spotListemp.size(); q++) {
+
+                                Log.d("CustomPackageChan", q + "");
+                                Log.d("CustomPackageChan", spotIdStart + "");
+                                Log.d("CustomPackageChan", spotIdEnd + "");
+
+                                if (spotListemp.get(q).getSpotName().equals(spotIdStart)) {
 
                                     startp = new LatLng(Double.parseDouble(spotListemp.get(q).getSpotLocationLat()), Double.parseDouble(spotListemp.get(q).getSpotLocationLong()));
 
                                 }
-                                if (spotListemp.get(q).getSpotID().equals(spotIdEnd)) {
+                                if (spotListemp.get(q).getSpotName().equals(spotIdEnd)) {
 
                                     endp = new LatLng(Double.parseDouble(spotListemp.get(q).getSpotLocationLat()), Double.parseDouble(spotListemp.get(q).getSpotLocationLong()));
 
@@ -445,6 +473,10 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
                         }
 
                         Log.d("CustomPackageChan", "Sud!Create 2:");
+
+                        Log.d("CustomPackageChan", startp + " he");
+                        Log.d("CustomPackageChan", endp + " he");
+
                         if (startp != null && endp != null) {
                             distance = Controllers.CalculationByDistance(startp, endp);
 
@@ -456,11 +488,32 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
 
                     }
                     distanceprice = distance * 50;
+                    int y = spinPax.getSelectedIndex();
+                    List<Object> spin = new ArrayList<>();
+                    spin = spinPax.getItems();
+                    spinPaxnum = String.valueOf(spin.get(y));
+                    Log.d("CustomPackActChan", spinPaxnum + "");
+                    spinPaxnum = String.valueOf(Integer.parseInt(spinPaxnum));
+
+                    List<Object> spin2 = new ArrayList<>();
+                    spin2 = spinLang.getItems();
+                    spinLanguage = String.valueOf(spin2.get(y));
+                    Log.d("CustomPackActChan", spinLanguage + "");
+
+                    List<Object> spin3 = new ArrayList<>();
+                    spin3 = spinNumTG.getItems();
+                    spinTGnum = String.valueOf(spin3.get(y));
+                    Log.d("CustomPackActChan", spinTGnum + "");
+
                     finalPrice = (hours * distanceprice) * Double.parseDouble(spinPaxnum);
 
                     Log.d("CustomPackageChan", "Distance price :" + distanceprice);
+                    Log.d("CustomPackageChan", "SpinPaxnum price :" + spinPaxnum);
+                    Log.d("CustomPackageChan", "Hours price :" + hours);
                     Log.d("CustomPackageChan", "Final price :" + finalPrice);
-                    CustomizedPackage cust = new CustomizedPackage(txtPackName.getText().toString(), spinLanguage, spinTGnum, spinPaxnum, String.valueOf(finalPrice), temp, Integer.parseInt(txtDays.getText().toString()), R.mipmap.ic_tourista, edtDescription.getText().toString(), eventDate);
+
+                    Controllers.removeCustomizedPackage(Integer.parseInt(pos));
+                    CustomizedPackage cust = new CustomizedPackage(txtPackName.getText().toString(), spinLanguage, spinTGnum, spinPaxnum, String.valueOf(finalPrice), temp, Integer.parseInt(txtDays.getText().toString()), R.mipmap.ic_tourista, edtDescription.getText().toString(), edtDate.getText().toString());
                     Controllers.addCustomizedPackage(cust);
 
 
@@ -491,14 +544,14 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
                 imgV.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Intent i = new Intent(Intent.ACTION_PICK,android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                        Intent i = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                         startActivityForResult(i, RESULT_LOAD_IMAGE);
                     }
                 });
 
                 return true;
             case R.id.delete:
-                if(custList.get(Integer.parseInt(pos))!=null){
+                if (custList.get(Integer.parseInt(pos)) != null) {
                     Controllers.removeCustomizedPackage(Integer.parseInt(pos));
                 }
                 return true;
@@ -506,22 +559,23 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
                 return super.onOptionsItemSelected(item);
         }
     }
+
     private void addEvent() {
-        if (! isGooglePlayServicesAvailable()) {
+        if (!isGooglePlayServicesAvailable()) {
             acquireGooglePlayServices();
         } else if (mFinalCredential.getSelectedAccountName() == null) {
             chooseAccount();
-        } else if (! isDeviceOnline()) {
+        } else if (!isDeviceOnline()) {
             edtDate.setText("No network connection available.");
         } else {
-            if(customData.getPackageItinerary()==null) {
+            if (customData.getPackageItinerary() == null) {
                 Calendar c = Calendar.getInstance();
                 System.out.println("Current time => " + c.getTime());
 
                 SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                 String formattedDate = df.format(c.getTime());
 
-                Controllers.addBookPackages(new BookedPackages(pack.getPackageId(),pack.getPackageName(),pack.getPackageItinerary(),pack.getPackageTourGuideClassification(),pack.getRating(),pack.getPackageNoOfSpots(),pack.getPackageTotalNoOfHours(),pack.getPackageImage(),pack.getSpotItinerary(),pack.getPackDescription(),pack.getPackPrice(),formattedDate,pack.getCompanyName()));
+                Controllers.addBookPackages(new BookedPackages(pack.getPackageId(), pack.getPackageName(), pack.getPackageItinerary(), pack.getPackageTourGuideClassification(), pack.getRating(), pack.getPackageNoOfSpots(), pack.getPackageTotalNoOfHours(), pack.getPackageImage(), pack.getSpotItinerary(), pack.getPackDescription(), pack.getPackPrice(), formattedDate, pack.getCompanyName()));
 
                 Intent i = new Intent(CustomPackageActivity.this, TourActivity.class);
                 startActivity(i);
@@ -530,6 +584,7 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
 
         }
     }
+
     @AfterPermissionGranted(REQUEST_PERMISSION_GET_ACCOUNTS)
     private void chooseAccount() {
         if (EasyPermissions.hasPermissions(
@@ -552,11 +607,12 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
                     Manifest.permission.GET_ACCOUNTS);
         }
     }
+
     @Override
     protected void onActivityResult(
             int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch(requestCode) {
+        switch (requestCode) {
             case REQUEST_GOOGLE_PLAY_SERVICES:
                 if (resultCode != RESULT_OK) {
                     edtDate.setText(
@@ -590,7 +646,7 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
             case RESULT_LOAD_IMAGE:
                 if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
                     Uri selectedImage = data.getData();
-                    String[] filePathColumn = { MediaStore.Images.Media.DATA };
+                    String[] filePathColumn = {MediaStore.Images.Media.DATA};
 
                     Cursor cursor = getContentResolver().query(selectedImage,
                             filePathColumn, null, null, null);
@@ -599,7 +655,6 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
                     int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
                     String picturePath = cursor.getString(columnIndex);
                     cursor.close();
-
 
 
                     Bitmap bmp = null;
@@ -614,6 +669,7 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
                 }
         }
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
@@ -664,6 +720,7 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
             showGooglePlayServicesAvailabilityErrorDialog(connectionStatusCode);
         }
     }
+
     void showGooglePlayServicesAvailabilityErrorDialog(
             final int connectionStatusCode) {
         GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
@@ -676,26 +733,31 @@ public class CustomPackageActivity extends AppCompatActivity implements EasyPerm
 
     @Override
     public void onLocationChanged(Location location) {
-        Controllers.setCurrentLocation(new LatLng(location.getLatitude(),location.getLongitude()));
-
-        mLastLocation = location;
-        curlocation = new LatLng(location.getLatitude(),location.getLongitude());
+        Controllers.setCurrentLocation(new LatLng(location.getLatitude(), location.getLongitude()));
+//
+//        mLastLocation = location;
+//        curlocation = new LatLng(location.getLatitude(), location.getLongitude());
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                 mGoogleApiClient);
-        mProgress.setMessage(" Adding event to google calendar");
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(1000);
-        mLocationRequest.setFastestInterval(1000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest,  this);
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                mGoogleApiClient);
+        if (mLastLocation != null) {
+           Controllers.setCurrentLocation(new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude()));
+            curlocation = new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude());
         }
     }
 

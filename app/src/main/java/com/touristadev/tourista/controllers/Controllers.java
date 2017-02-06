@@ -547,6 +547,7 @@ public class Controllers {
        return currentLocation;
    }
     public static void setCurrentLocation(LatLng temp){
+
         currentLocation = temp;
     }
 
